@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const handleGoogleLogin = async () => {
     try {
+      console.log("url is :" , `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/google`)
       window.location.href = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/google`;
     } catch (error) {
       console.log("Error in signing with google", error);

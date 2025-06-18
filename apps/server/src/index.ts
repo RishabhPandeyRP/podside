@@ -456,7 +456,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    console.log(`this is the consumer : username : ${producerUsername} & producerId : ${producerId}`)
+    console.log(`this is the consumer : username : ${producerUsername} & producerId : ${producerId} , consumer kind: ${consumer.kind}`)
 
     callback({
       id: consumer.id,

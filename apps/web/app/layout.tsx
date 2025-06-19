@@ -17,6 +17,7 @@ import { Inter } from "next/font/google";
 import Footer from "../components/Footer";
 import Link from "next/link";
 import { useState } from "react";
+import { Toaster } from "react-hot-toast";
 
 // Initialize the font object
 const inter = Inter({
@@ -94,7 +95,10 @@ export default function RootLayout({
           </Navbar>
         </div>
 
-        <div className="flex-grow h-fit">{children}</div>
+        <div className="flex-grow h-fit">
+          <Toaster position="top-right" />
+          {children}
+        </div>
 
         <Footer />
       </body>

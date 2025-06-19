@@ -468,6 +468,27 @@ io.on("connection", (socket) => {
   });
 
 
+  socket.on("leave-room" , async ()=>{
+    const roomInfo = getRoomBySocketId(socket.id)
+    if(!roomInfo) return;
+
+    const {roomId , peer} = roomInfo;
+
+    peer.consumers.forEach((c) => c.close())
+    peer.producer.forEach((p) => p.close())
+
+    peer.consumerTransport?.close()
+    peer.producerTransport?.close()
+
+    peers.delete(socket.id)
+
+    for (const producer of peer.producer.values()) {
+      socket.to(roomId).emit("producer-closed", { producerId: producer.id , username:peer.username });
+      producer.close();
+    }
+    
+  })
+
 
   socket.on("disconnect", () => {
     console.log(`❌ Client disconnected: ${socket.id}`);
@@ -479,7 +500,7 @@ io.on("connection", (socket) => {
 
     // 1. Notify other peers in the room
     for (const producer of peer.producer.values()) {
-      socket.to(roomId).emit("producer-closed", { producerId: producer.id });
+      socket.to(roomId).emit("producer-closed", { producerId: producer.id, username:peer.username });
       producer.close();
     }
 

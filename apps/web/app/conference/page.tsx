@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Device } from "mediasoup-client";
 import io from "socket.io-client";
 import { openDB } from 'idb';
+import { toast } from 'react-hot-toast';
 // import { saveChunk } from './utils/db'; // adjust path
 
 
@@ -162,23 +163,42 @@ export default function Conference() {
             console.log("📡 Consumed track:", consumer.track.kind);
 
             setRemoteStreams((prev) => {
-                const updated = [...prev];
-                const existing = updated.find((item) => item.id === producerId);
+
+                const existing = prev.find((item) => item.id === producerId);
 
                 if (existing) {
-                    existing.stream.addTrack(consumer.track);
-                } else {
-                    const stream = new MediaStream([consumer.track]);
-                    //@ts-ignore
-                    updated.push({ id: producerId, stream, username: consumerData.username });
 
-                    // Add effect for new participant only if it's a video track
+                    const newStream = new MediaStream([
+                        ...existing.stream.getTracks(),
+                        consumer.track,
+                    ]);
+
+                    return prev.map((item) =>
+                        item.id === producerId
+                            ? { ...item, stream: newStream }
+                            : item
+                    );
+                } else {
+
+                    const stream = new MediaStream([consumer.track]);
+
+                    // Trigger side-effect if it's a video track
                     if (consumer.track.kind === 'video') {
                         addNewParticipantEffect(producerId);
                     }
+
+                    return [
+                        ...prev,
+                        {
+                            id: producerId,
+                            stream,
+                            //@ts-ignore
+                            username: consumerData.username,
+                        },
+                    ];
                 }
 
-                return updated;
+                // return updated;
             });
         };
 
@@ -223,7 +243,7 @@ export default function Conference() {
             }
         });
 
-        socket.on("producer-closed", ({ producerId }) => {
+        socket.on("producer-closed", ({ producerId, username }) => {
             console.log("🚫 Remote producer closed:", producerId);
 
             setRemoteStreams((prev) => {
@@ -234,9 +254,8 @@ export default function Conference() {
             });
 
             consumedProducerIds.current.delete(producerId);
+            toast(`${username} left the meeting`)
         });
-
-        // setHasJoined(true);
     };
 
 
@@ -306,6 +325,43 @@ export default function Conference() {
         }
     };
 
+    const disconnect = () => {
+        if (localStream) {
+            localStream.getTracks().forEach((track) => {
+                track.stop()
+            })
+            setLocalStream(null)
+        }
+
+        if (screenStream) {
+            screenStream.getTracks().forEach(track => track.stop())
+            setScreenStream(null)
+        }
+
+        setRemoteStreams(prev => {
+            prev.forEach(({ stream }) => {
+                stream.getTracks().forEach(track => track.stop())
+            })
+            return []
+        })
+
+        sendTransportRef.current?.close()
+        sendTransportRef.current = null
+        recvTransportRef.current?.close()
+        recvTransportRef.current = null
+
+        consumedProducerIds.current?.clear()
+        ownProducerId.current?.clear()
+
+        deviceRef.current = null
+
+        socket.emit("leave-room")
+
+        setHasJoined(false)
+        setUsername("")
+        setRoomId("")
+    }
+
     useEffect(() => {
         remoteStreams.forEach(({ id, stream }) => {
             console.log(`🧩 Stream ${id}: A=${stream.getAudioTracks().length}, V=${stream.getVideoTracks().length}`);
@@ -345,186 +401,7 @@ export default function Conference() {
     }, [localStream, hasJoined]);
 
 
-
     return (
-        // <div className="p-4">
-        //     {!hasJoined ? (
-        //         <div className="flex flex-col gap-4 w-full max-w-md mx-auto">
-        //             <h1 className="text-xl font-bold mb-2">🎤 Join Conference</h1>
-        //             <input
-        //                 className="border p-2 rounded"
-        //                 placeholder="Enter Username"
-        //                 value={username}
-        //                 onChange={(e) => setUsername(e.target.value)}
-        //             />
-        //             <input
-        //                 className="border p-2 rounded"
-        //                 placeholder="Enter Room ID"
-        //                 value={roomId}
-        //                 onChange={(e) => setRoomId(e.target.value)}
-        //             />
-        //             <button
-        //                 className="p-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-        //                 onClick={joinRoom}
-        //             >
-        //                 Join Room
-        //             </button>
-        //         </div>
-        //     ) : (
-        //         <>
-        //             <h1 className="text-xl font-bold mb-4">🎥 Video Conference: {roomId}</h1>
-        //             <div className="flex gap-6 items-center">
-        //                 <div className="flex flex-col ">
-        //                     <div>
-        //                         <h2 className="font-semibold">Local Stream</h2>
-        //                         <video
-        //                             ref={localVideoRef}
-        //                             autoPlay
-        //                             muted
-        //                             className="w-[480px] h-[360px] border rounded"
-        //                             style={{ transform: "scaleX(-1)" }}
-        //                         />
-        //                         <p>{username}</p>
-        //                     </div>
-        //                     <div className="flex gap-5 items-center h-[100px] w-full justify-center">
-        //                         <button
-        //                             onClick={audioHandler}
-        //                             className="border p-4 bg-neutral-100/30 rounded-md cursor-pointer"
-        //                         >
-        //                             {isAudioMuted ? "unmute" : "mute"}
-        //                         </button>
-
-        //                         <button
-        //                             onClick={videoHandler}
-        //                             className="border p-4 bg-neutral-100/30 rounded-md cursor-pointer"
-        //                         >
-        //                             {isVideoMuted ? "on-camera" : "off-camera"}
-        //                         </button>
-
-        //                         <button
-        //                             onClick={shareScreen}
-        //                             className="border p-4 bg-neutral-100/30 rounded-md cursor-pointer"
-        //                             disabled={!!screenStream} // disable if already sharing
-        //                         >
-        //                             {screenStream ? "Sharing Screen" : "Share Screen"}
-        //                         </button>
-
-        //                     </div>
-        //                 </div>
-
-        //                 <div>
-        //                     <h2 className="font-semibold">Remote Streams ({remoteStreams.length})</h2>
-        //                     <div className="flex flex-wrap gap-4">
-        //                         {remoteStreams.map(({ id, stream, username }) => (
-        //                             <div className="flex flex-col" key={id}>
-        //                                 {stream.getVideoTracks()[0] && <><video
-        //                                     key={id}
-        //                                     autoPlay
-
-        //                                     playsInline
-        //                                     className="w-[320px] h-[240px] border rounded bg-black"
-        //                                     ref={(video) => {
-        //                                         console.log("🔥 Ref callback invoked", video, stream);
-        //                                         if (video) {
-        //                                             if (video.srcObject !== stream) {
-        //                                                 video.srcObject = stream;
-        //                                             }
-
-        //                                             const videoTrack = stream.getVideoTracks()[0];
-        //                                             if (videoTrack) {
-        //                                                 console.log("🧪 Remote video track readyState:", videoTrack.readyState);
-        //                                                 console.log("🧪 Remote video track muted:", videoTrack.muted);
-        //                                                 console.log("🧪 Remote video track enabled:", videoTrack.enabled);
-
-        //                                                 videoTrack.onmute = () => console.warn("🚫 Remote video track muted");
-        //                                                 videoTrack.onunmute = () => console.log("✅ Remote video track unmuted");
-        //                                             } else {
-        //                                                 console.warn("⚠️ No video track found in remote stream");
-        //                                             }
-        //                                             video
-        //                                                 .play()
-        //                                                 .then(() => console.log(`✅ Playing remote stream: ${id}`))
-        //                                                 .catch((err) =>
-        //                                                     console.error(`❌ Error playing remote stream (${id}):`, err)
-        //                                                 );
-        //                                         }
-        //                                     }}
-        //                                 />
-        //                                     <p>{username}</p></>
-        //                                 }
-
-
-        //                                 <audio
-        //                                     key={`audio-${id}`}
-        //                                     autoPlay
-        //                                     hidden
-        //                                     controls={false}
-        //                                     playsInline
-        //                                     muted={false}
-        //                                     ref={(audio) => {
-        //                                         if (!audio || audio.srcObject === stream) return;
-
-        //                                         audio.srcObject = stream;
-
-        //                                         const waitForAudioTrack = () => {
-        //                                             const hasAudio = stream.getAudioTracks().length > 0;
-
-        //                                             if (hasAudio && userInteracted.current) {
-        //                                                 audio
-        //                                                     .play()
-        //                                                     .then(() => console.log("🔊 Playing remote audio"))
-        //                                                     .catch((err) =>
-        //                                                         console.error("❌ Error playing remote audio:", err)
-        //                                                     );
-        //                                             } else {
-        //                                                 setTimeout(waitForAudioTrack, 300);
-        //                                             }
-        //                                         };
-
-        //                                         waitForAudioTrack();
-        //                                     }}
-        //                                 />
-
-
-
-
-
-        //                             </div>
-        //                         ))}
-        //                         {remoteStreams.length === 0 && <p>No remote streams yet</p>}
-        //                     </div>
-        //                 </div>
-        //             </div>
-
-
-        //             {screenStream && (
-        //                 <div>
-        //                     <h2 className="font-semibold">Screen Sharing</h2>
-        //                     <video
-        //                         autoPlay
-        //                         muted
-        //                         playsInline
-        //                         className="w-[480px] h-[360px] border rounded"
-        //                         ref={(video) => {
-        //                             if (video && video.srcObject !== screenStream) {
-        //                                 video.srcObject = screenStream;
-        //                             }
-        //                         }}
-        //                     />
-        //                     <button
-        //                         className="mt-2 p-2 bg-red-600 text-white rounded"
-        //                         onClick={stopScreenShare}
-        //                     >
-        //                         Stop Sharing
-        //                     </button>
-        //                 </div>
-        //             )}
-
-        //         </>
-        //     )}
-        // </div>
-
-
         <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100">
             {!hasJoined ? (
                 <div className="flex flex-col gap-5 w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
@@ -598,6 +475,8 @@ export default function Conference() {
                                 >
                                     {screenStream ? "🖥️ Sharing" : "📺 Share Screen"}
                                 </button>
+                                <button onClick={disconnect}>Leave Room</button>
+
                             </div>
                         </div>
 

@@ -8,8 +8,13 @@ import session from "express-session";
 import http from "http";
 import { Server } from "socket.io";
 import * as mediasoup from "mediasoup";
+import { Response, Request } from "express";
+import { v4 as uuidv4 } from "uuid";
 // import os from "os"
 // import { exec } from 'child_process';
+
+
+
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -42,37 +47,6 @@ app.use(passport.session());
 app.use("/auth", authRouter);
 
 
-// Function to get public IP
-// async function getPublicIP() {
-//   return new Promise((resolve, reject) => {
-//     exec('curl -s https://api.ipify.org', (error, stdout) => {
-//       if (error) {
-//         console.log('Failed to get public IP, using local IP');
-//         resolve(getLocalIP());
-//       } else {
-//         resolve(stdout.trim());
-//       }
-//     });
-//   });
-// }
-
-// // Function to get local IP
-// function getLocalIP() {
-//   const interfaces = os.networkInterfaces();
-//   for (const devName in interfaces) {
-//     const iface = interfaces[devName];
-//     //@ts-ignore
-//     for (let i = 0; i < iface.length; i++) {
-//       //@ts-ignore
-//       const alias = iface[i];
-//       if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-//         return alias.address;
-//       }
-//     }
-//   }
-//   return '127.0.0.1';
-// }
-
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -90,6 +64,8 @@ httpServer.listen(8000, () => {
 // app.listen(port || 8000, () => {
 //   console.log(`Server is listening on port ${port}`);
 // });
+
+
 
 // ---- MediaSoup setup ----
 let worker;
@@ -119,6 +95,13 @@ type RoomInfo = {
 };
 
 const rooms = new Map<string, RoomInfo>();
+
+app.post("/create-room", (req:Request, res:Response) => {
+  const roomId = uuidv4();
+  rooms.set(roomId, { peers: new Map() });
+  res.json({ roomId, link: `http://localhost:3000/conference/${roomId}` });
+});
+
 
 
 
@@ -527,3 +510,6 @@ io.on("connection", (socket) => {
   });
 
 });
+
+
+

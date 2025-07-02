@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 // import { saveChunk } from './utils/db'; // adjust path
 
 
-const socket = io("http://localhost:8000",
+const socket = io("http://localhost:4000",
 
     { withCredentials: true, transports: ["websocket"] });
 

@@ -14,3 +14,43 @@ model User {
   name  String
   password String
 }
+
+model Room {
+  id              String        @id @default(uuid())
+  roomName        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime?      @updatedAt
+  expiresAt       DateTime?
+  status          RoomStatus    @default(PENDING)
+  creatorId       String
+  maxParticipants Int           @default(10)
+
+  participants    Participant[]
+}
+
+model Participant {
+  id          String           @id @default(uuid())
+  roomId      String
+  email       String
+  isJoined    Boolean          @default(false)
+  joinedAt    DateTime?
+  leftAt      DateTime?
+  role        ParticipantRole  @default(GUEST)
+
+  room        Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, email]) // ensures one entry per email per room
+}
+
+enum RoomStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum ParticipantRole {
+  CREATOR
+  GUEST
+}
+

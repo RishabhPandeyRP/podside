@@ -418,6 +418,24 @@ async function start() {
 
     })
 
+    socket.on("video-muted", ({roomId,producerId})=>{
+      socket.to(roomId).emit("peer-video-muted", { producerId, socketId: socket.id });
+      console.log("video muted hit:" , roomId , producerId)
+    })
+
+    socket.on("audio-muted", ({roomId,producerId})=>{
+      socket.to(roomId).emit("peer-audio-muted", { producerId, socketId: socket.id });
+      console.log("audio muted hit:" , roomId , producerId)
+    })
+
+    socket.on("video-unmuted", ({roomId,producerId})=>{
+      socket.to(roomId).emit("peer-video-unmuted", { producerId, socketId: socket.id });
+    })
+
+    socket.on("audio-unmuted", ({roomId,producerId})=>{
+      socket.to(roomId).emit("peer-audio-unmuted", { producerId, socketId: socket.id });
+    })
+
 
     socket.on("disconnect", () => {
       console.log(`❌ Client disconnected: ${socket.id}`);

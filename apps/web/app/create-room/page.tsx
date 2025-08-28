@@ -154,19 +154,19 @@ const CreateRoom = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
+        <div className="min-h-screen bg-[#151515] flex items-center justify-center p-4 border-0 border-red-500">
+            <div className="w-fit border-0 border-red-500">
                 {/* Header */}
-                <div className="text-center mb-8">
+                {/* <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                         <Video className="w-8 h-8 text-blue-600" />
                     </div>
                     <h1 className="text-2xl font-semibold text-gray-900 mb-2">Start a Meeting</h1>
                     <p className="text-gray-600">Create a secure room for your video conference</p>
-                </div>
+                </div> */}
 
                 {/* Main Card */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
+                <div className="bg-[#151515] rounded-2xl shadow-lg border-0 border-gray-100 p-6 space-y-6 w-fit">
                     <RoomForm
                         roomUrl={roomUrl}
                         setRoomUrl={setRoomUrl}

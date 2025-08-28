@@ -53,6 +53,8 @@ export default function Conference() {
     const consumedProducerIds = useRef<Set<string>>(new Set());
     const ownProducerId = useRef<Set<string> | null>(new Set());
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+    const videoProducerId = useRef<string | null>(null);
+    const audioProducerId = useRef<string | null>(null);
 
     const [isAudioMuted, setAudioMuted] = useState<boolean>(false);
     const [isVideoMuted, setVideoMuted] = useState<boolean>(false);
@@ -78,6 +80,8 @@ export default function Conference() {
     // New states for redirect functionality
     const [hasLeftRoom, setHasLeftRoom] = useState(false);
     const [redirectCountdown, setRedirectCountdown] = useState(10);
+    const [remoteVideoMuted, setRemoteVideoMuted] = useState<Record<string, boolean>>({});
+    const [remoteAudioMuted, setRemoteAudioMuted] = useState<Record<string, boolean>>({});
 
 
     // Email validation function
@@ -124,6 +128,35 @@ export default function Conference() {
             window.location.href = '/';
         }
     }, [hasLeftRoom, redirectCountdown]);
+
+    useEffect(() => {
+    function handlePeerVideoMuted({ producerId }:{producerId: string}) {
+        console.log("Peer video muted:", producerId);
+        setRemoteVideoMuted(prev => ({ ...prev, [producerId]: true }));
+    }
+    function handlePeerVideoUnmuted({ producerId }:{producerId: string}) {
+        setRemoteVideoMuted(prev => ({ ...prev, [producerId]: false }));
+    }
+    function handlePeerAudioMuted({ producerId }:{producerId: string}) {
+        console.log("Peer audio muted:", producerId);
+        setRemoteAudioMuted(prev => ({ ...prev, [producerId]: true }));
+    }
+    function handlePeerAudioUnmuted({ producerId }:{producerId: string}) {
+        setRemoteAudioMuted(prev => ({ ...prev, [producerId]: false }));
+    }
+
+    socket.on("peer-video-muted", handlePeerVideoMuted);
+    socket.on("peer-video-unmuted", handlePeerVideoUnmuted);
+    socket.on("peer-audio-muted", handlePeerAudioMuted);
+    socket.on("peer-audio-unmuted", handlePeerAudioUnmuted);
+
+    return () => {
+        socket.off("peer-video-muted", handlePeerVideoMuted);
+        socket.off("peer-video-unmuted", handlePeerVideoUnmuted);
+        socket.off("peer-audio-muted", handlePeerAudioMuted);
+        socket.off("peer-audio-unmuted", handlePeerAudioUnmuted);
+    };
+}, []);
 
     // utils/db.ts
     const initDB = async () => {
@@ -336,6 +369,12 @@ export default function Conference() {
                 socket.emit("produce", { kind, rtpParameters }, res)
             );
             ownProducerId.current?.add(id);
+            if(kind === 'video') {
+                videoProducerId.current = id;
+            }
+            if(kind === 'audio') {
+                audioProducerId.current = id;
+            }
             callback({ id });
         });
 
@@ -379,12 +418,18 @@ export default function Conference() {
     const audioHandler = () => {
         if (!localStream) return;
         localStream.getAudioTracks().forEach((track) => (track.enabled = isAudioMuted));
+        console.log("audio muted hit from ui" , roomId , audioProducerId.current);
+        if(!isAudioMuted) socket.emit("audio-muted", { roomId, producerId: audioProducerId.current });
+        else socket.emit("audio-unmuted", { roomId, producerId: audioProducerId.current });
         setAudioMuted(!isAudioMuted);
     };
 
     const videoHandler = () => {
         if (!localStream) return;
         localStream.getVideoTracks().forEach((track) => (track.enabled = isVideoMuted));
+        console.log("video muted hit from ui" , roomId , videoProducerId.current);
+        if(!isVideoMuted) socket.emit("video-muted", { roomId, producerId: videoProducerId.current });
+        else socket.emit("video-unmuted", { roomId, producerId: videoProducerId.current });
         setVideoMuted(!isVideoMuted);
     };
 
@@ -553,7 +598,7 @@ export default function Conference() {
     }
 
     return (
-        <div className="p-6 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-800 dark:text-gray-100">
+        <div className="p-6 h-screen bg-[#151515] flex items-center justify-center border border-green-500">
             {!hasJoined ? (
                 <JoiningScreen
                     roomIdUrl={roomIdUrl}
@@ -577,9 +622,12 @@ export default function Conference() {
                     screenStream={screenStream}
                     isLeavingRoom={isLeavingRoom}
                     remoteStreams={remoteStreams}
+                    localStream={localStream}
                     stopScreenShare={stopScreenShare}
                     disconnect={disconnect}
                     audioHandler={audioHandler}
+                    remoteVideoMuted={remoteVideoMuted}
+                    remoteAudioMuted={remoteAudioMuted}
                     videoHandler={videoHandler}>
                 </ConferenceScreen>
             )}

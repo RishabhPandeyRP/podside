@@ -49,7 +49,7 @@ export default function RootLayout({
       <body
         className={`${inter.className} antialiased border-0 border-green-600 flex flex-col min-h-screen`}
       >
-        <div className="border-0 border-green-400 pt-[0px]">
+        {/* <div className="border-0 border-green-400 pt-[0px]">
           <Navbar>
             <NavBody>
               <NavbarLogo />
@@ -73,7 +73,7 @@ export default function RootLayout({
                 onClose={() => setIsMobileMenuOpen(false)}
               >
                 {/* Mobile menu items */}
-                <div className="flex flex-col w-full gap-4">
+                {/* <div className="flex flex-col w-full gap-4">
                   <Link href="/" className="text-black dark:text-white">
                     Home
                   </Link>
@@ -93,7 +93,7 @@ export default function RootLayout({
               </MobileNavMenu>
             </MobileNav>
           </Navbar>
-        </div>
+        </div>  */}
 
         <div className="flex-grow h-fit">
           <Toaster position="top-right" />

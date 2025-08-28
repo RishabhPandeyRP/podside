@@ -44,6 +44,10 @@ app.use("/api",routes)
 
 const webrtcSocket: Socket = ClientIO("http://localhost:4000");
 
+webrtcSocket.on("connect", () => {
+  console.log("📡 Connected to WebRTC service");
+});
+
 // const io = new Server(httpServer, {
 //   cors: {
 //     origin: [
@@ -55,9 +59,7 @@ const webrtcSocket: Socket = ClientIO("http://localhost:4000");
 // });
 
 
-webrtcSocket.on("connect", () => {
-  console.log("📡 Connected to WebRTC service");
-});
+
 
 httpServer.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port || 8000}`);

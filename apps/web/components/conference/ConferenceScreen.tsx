@@ -1,6 +1,8 @@
 import React from "react"
-import { Mail, Video, Shield, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useMemo } from "react";
+import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff } from "lucide-react";
 import { Device } from "mediasoup-client";
+import StreamLayout from "./StreamLayout";
 
 interface ConferenceInterface {
     roomIdUrl?: string | string[];
@@ -35,6 +37,9 @@ interface ConferenceInterface {
 
     screenStream: MediaStream | null;
     setScreenStream: React.Dispatch<React.SetStateAction<MediaStream | null>>;
+
+    remoteVideoMuted: Record<string, boolean>;
+    remoteAudioMuted: Record<string, boolean>;
 
     screenProducerId: React.RefObject<string | null>;
     sendTransportRef: React.RefObject<any>;
@@ -79,6 +84,47 @@ interface ConferenceInterface {
     videoHandler: () => void;
 }
 
+const generateShinyColor = () => {
+    const shinyColors = [
+        // Vibrant purples
+        '#8B5CF6', '#A855F7', '#9333EA', '#7C3AED', '#6D28D9',
+        // Electric blues
+        '#3B82F6', '#2563EB', '#1D4ED8', '#1E40AF', '#06B6D4',
+        // Emerald greens
+        '#10B981', '#059669', '#047857', '#065F46', '#22C55E',
+        // Bright pinks
+        '#EC4899', '#DB2777', '#BE185D', '#F472B6', '#E879F9',
+        // Golden yellows
+        '#F59E0B', '#D97706', '#B45309', '#FBBF24', '#FCD34D',
+        // Coral/Orange
+        '#F97316', '#EA580C', '#DC2626', '#EF4444', '#F87171',
+        // Teal/Cyan
+        '#14B8A6', '#0D9488', '#0F766E', '#06B6D4', '#67E8F9',
+        // Indigo
+        '#6366F1', '#4F46E5', '#4338CA', '#3730A3', '#818CF8'
+    ];
+
+    return shinyColors[Math.floor(Math.random() * shinyColors.length)];
+};
+
+// Function to generate a complementary darker shade for overlay
+const generateOverlayColor = (baseColor: string) => {
+    // Convert hex to RGB
+    const hex = baseColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // Create darker version for overlay
+    const darkerR = Math.floor(r * 0.3);
+    const darkerG = Math.floor(g * 0.3);
+    const darkerB = Math.floor(b * 0.3);
+
+    return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
+};
+
+
+
 const ConferenceScreen = ({
     roomId,
     isRecording,
@@ -90,111 +136,78 @@ const ConferenceScreen = ({
     screenStream,
     isLeavingRoom,
     remoteStreams,
+    localStream,
     stopScreenShare,
     disconnect,
     audioHandler,
+    remoteVideoMuted,
+    remoteAudioMuted,
     videoHandler
 
 }: Partial<ConferenceInterface>) => {
+
+    // At the top of your ConferenceScreen component
+    const remoteColorMap = useMemo(() => {
+        const map: Record<string, { main: string; overlay: string }> = {};
+        remoteStreams?.forEach(({ id }) => {
+            // Use id as the key for consistency
+            const main = generateShinyColor() || "#8B5CF6"; // Fallback to a default color if needed
+            const overlay = generateOverlayColor(main);
+            map[id] = { main, overlay };
+        });
+        return map;
+    }, [remoteStreams]);
+
+
+    console.log("Remote Streams:", remoteStreams);
+
     return (
-        <>
-            <h1 className="text-2xl font-bold mb-6 text-center">
-                🎥 Conference Room: <span className="text-blue-500">{roomId}</span>
-            </h1>
+        <div className="flex flex-col justify-between gap-5 p-2 bg-[#151515] rounded-lg shadow-lg mx-auto border-0 border-green-500 w-[100%] h-[90%]">
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Local stream */}
-                <div className="flex flex-col gap-4 items-center">
-                    <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-md">
-                        {isRecording && (
-                            <p className="absolute top-2 right-3 text-sm text-red-500 animate-pulse">
-                                🔴 Recording
-                            </p>
-                        )}
-                        <h2 className="text-lg font-semibold mb-2">Local Stream</h2>
-                        <video
-                            ref={localVideoRef}
-                            autoPlay
-                            muted
-                            className="w-[480px] h-[360px] rounded-lg border border-gray-300 dark:border-gray-700 shadow-inner object-cover"
-                            style={{ transform: "scaleX(-1)" }}
-                        />
-                        <p className="text-center mt-2 font-medium text-gray-700 dark:text-gray-300">{username}</p>
-                    </div>
+            <StreamLayout
+                localStream={localStream}
+                localVideoRef={localVideoRef}
+                username={username}
+                isVideoMuted={isVideoMuted}
+                isAudioMuted={isAudioMuted}
+                remoteStreams={remoteStreams}
+                remoteAudioMuted={remoteAudioMuted}
+                remoteVideoMuted={remoteVideoMuted}
+                remoteColorMap={remoteColorMap}
+            />
 
-                    {/* Controls */}
-                    <div className="flex gap-4 justify-center mt-2">
-                        <button
-                            onClick={audioHandler}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                        >
-                            {isAudioMuted ? "🎙️ Unmute" : "🔇 Mute"}
-                        </button>
-                        <button
-                            onClick={videoHandler}
-                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                        >
-                            {isVideoMuted ? "📷 Turn On" : "📴 Turn Off"}
-                        </button>
-                        <button
-                            onClick={shareScreen}
-                            disabled={!!screenStream}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition ${screenStream
-                                ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700"
-                                : "bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border dark:border-gray-600"
-                                }`}
-                        >
-                            {screenStream ? "🖥️ Sharing" : "📺 Share Screen"}
-                        </button>
-                        <button onClick={disconnect} disabled={isLeavingRoom}>
-                            {isLeavingRoom ? "leaving..." : "Leave Room"}
-                        </button>
+            {/* Controls */}
+            <div className="flex gap-4 justify-center items-center border-0 ">
+                <button
+                    onClick={audioHandler}
+                    className="flex items-center gap-2 px-3 py-3 rounded-lg hover:bg-[#292929] transition-all duration-100 bg-[#222222] text-sm"
+                >
+                    {!isAudioMuted ? <Mic></Mic> : <MicOff className="text-red-400 text-sm"></MicOff>}
+                </button>
+                <button
+                    onClick={videoHandler}
+                    className="flex items-center gap-2 px-3 py-3 rounded-lg hover:bg-[#292929] transition-all duration-100 bg-[#222222]"
+                >
+                    {!isVideoMuted ? <Video></Video> : <VideoOff className="text-red-400"></VideoOff>}
+                </button>
+                <button
+                    onClick={shareScreen}
+                    disabled={!!screenStream}
+                    className={`flex items-center gap-2 px-3 py-3 rounded-lg transition-all duration-100 ${!screenStream
+                        ? "bg-[#222222] hover:bg-[#292929]"
+                        : "bg-[#9966CC] hover:bg-[#9966ccb8]"
+                        }`}
+                >
+                    {screenStream ? <MonitorUp></MonitorUp> : <MonitorUp></MonitorUp>}
+                </button>
+                <button
+                    onClick={disconnect}
+                    disabled={isLeavingRoom}
+                    className="flex items-center gap-2 px-3 py-3 rounded-lg hover:bg-[#322424] transition-all duration-100 bg-[#2a1e1e] disabled:cursor-not-allowed disabled:bg-[#2a1e1e] text-red-400"
+                >
+                    {isLeavingRoom ? <PhoneOff></PhoneOff> : <PhoneOff></PhoneOff>}
+                </button>
 
-                    </div>
-                </div>
-
-                {/* Remote streams */}
-                <div className="flex-1">
-                    <h2 className="text-lg font-semibold mb-3">Remote Streams ({remoteStreams?.length})</h2>
-                    <div className="flex flex-wrap gap-4">
-                        {remoteStreams && remoteStreams.length > 0 ? (
-                            remoteStreams?.map(({ id, stream, username }) => (
-                                <div className="flex flex-col items-center bg-white border-white dark:bg-gray-900 p-2 rounded-lg shadow-sm" key={id}>
-                                    {stream.getVideoTracks()[0] && (
-                                        <>
-                                            <video
-                                                key={id}
-                                                autoPlay
-                                                playsInline
-                                                className="w-[320px] h-[240px] rounded border border-gray-300 dark:border-gray-700 bg-black object-cover"
-                                                ref={(video) => {
-                                                    if (video && video.srcObject !== stream) {
-                                                        video.srcObject = stream;
-                                                    }
-                                                }}
-                                            />
-                                            <p className="mt-1 font-medium text-sm">{username}</p>
-                                        </>
-                                    )}
-                                    <audio
-                                        key={`audio-${id}`}
-                                        autoPlay
-                                        hidden
-                                        playsInline
-                                        muted={false}
-                                        ref={(audio) => {
-                                            if (audio && audio.srcObject !== stream) {
-                                                audio.srcObject = stream;
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 dark:text-gray-400">No remote streams yet</p>
-                        )}
-                    </div>
-                </div>
             </div>
 
             {/* Screen sharing section */}
@@ -220,7 +233,7 @@ const ConferenceScreen = ({
                     </button>
                 </div>
             )}
-        </>
+        </div>
     )
 }
 

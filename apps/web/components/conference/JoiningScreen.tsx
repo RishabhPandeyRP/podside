@@ -90,28 +90,28 @@ const JoiningScreen = ({
     joinRoom
 }:Partial<ConferenceInterface>)=>{
     return(
-        <div className="flex flex-col gap-5 w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
+        <div className="flex flex-col gap-6 w-full max-w-lg mx-auto bg-[#151515] rounded-2xl shadow-lg p-6 border-0">
                     {/* Success Badge */}
-                    <div className="flex items-center justify-center gap-2 mb-2">
+                    {/* <div className="flex items-center justify-center gap-2 mb-2">
                         <CheckCircle className="w-5 h-5 text-green-600" />
                         <span className="text-green-600 text-sm font-medium">Room Verified</span>
-                    </div>
+                    </div> */}
 
-                    <h1 className="text-2xl font-semibold text-center">🎤 Join Conference</h1>
-                    <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                    <h1 className="text-3xl font-semibold text-center text-[#f2f2f2]"> Join Room</h1>
+                    {/* <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                         Room ID: <span className="font-mono text-blue-600 dark:text-blue-400">{roomIdUrl}</span>
-                    </p>
+                    </p> */}
 
                     {/* Email Input */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Email Address *
                         </label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                             <input
                                 type="email"
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full pl-10 pr-4 py-3 rounded-lg  outline-none transition-all duration-200 text-white bg-[#222222] placeholder-neutral-500"
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail!(e.target.value)}
@@ -123,12 +123,12 @@ const JoiningScreen = ({
 
                     {/* Name Input */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Display Name *
                         </label>
                         <input
                             type="text"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full pl-10 pr-4 py-3 rounded-lg  outline-none transition-all duration-200 text-white bg-[#222222] placeholder-neutral-500"
                             placeholder="Enter your name"
                             value={username}
                             onChange={(e) => setUsername!(e.target.value)}
@@ -138,7 +138,7 @@ const JoiningScreen = ({
                     </div>
 
                     <button
-                        className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-all text-lg font-medium flex items-center justify-center gap-2"
+                        className="p-3 bg-[#9966CC] hover:bg-[#9966cce5] text-[#f2f2f2] rounded-xl disabled:bg-[#9966ccb7] disabled:cursor-not-allowed transition-all text-lg font-medium flex items-center justify-center gap-2"
                         onClick={joinRoom}
                         disabled={!username?.trim() || !email?.trim() || isValidating}
                     >
@@ -156,7 +156,7 @@ const JoiningScreen = ({
                     </button>
 
                     {/* Room Info */}
-                    {roomDetails && (
+                    {/* {roomDetails && (
                         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm">
                             <p className="text-blue-800 dark:text-blue-300">
                                 <strong>Meeting:</strong> {roomDetails.name || 'Conference Room'}
@@ -167,7 +167,7 @@ const JoiningScreen = ({
                                 </p>
                             )}
                         </div>
-                    )}
+                    )} */}
                 </div>
     )
 }

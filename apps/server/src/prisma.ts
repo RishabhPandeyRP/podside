@@ -12,7 +12,7 @@ export const prisma =
         url: process.env.ACCELERATE_URL,
       },
     },
-    accelerate: true, // 🔥 enables Prisma Accelerate
+    accelerate: false, // 🔥 enables Prisma Accelerate
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

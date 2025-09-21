@@ -13,6 +13,24 @@ model User {
   email String  @unique
   name  String
   password String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  device    String?  
+  ipAddress String?
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
 }
 
 model Room {

@@ -27,3 +27,5 @@ export const generateAccessToken = (payload: Payload, type: string): string => {
     }
     throw new Error("Invalid token type")
 }
+
+

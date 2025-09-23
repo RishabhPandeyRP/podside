@@ -3,7 +3,7 @@ import { userLogin } from "../services/userService";
 import { Request, Response } from "express";
 
 const userController = {
-    userSignUp: async (req:Request, res:Response) => {
+    userSignUp: async (req: Request, res: Response) => {
         const { email, name, password } = req.body;
         try {
             if (!email || !name || !password) {
@@ -20,7 +20,7 @@ const userController = {
         }
     },
 
-    userLogin: async (req:Request, res:Response) => {
+    userLogin: async (req: Request, res: Response) => {
         const { email, password, device, ipAddress } = req.body;
         try {
             if (!email || !password) {
@@ -30,14 +30,31 @@ const userController = {
             if (!result.success) {
                 return res.status(400).json({ message: result.message });
             }
-            return res.status(200).json({ message: result.message, user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken });
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,                // protect against XSS
+                secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+                sameSite: "strict",            // CSRF protection
+                maxAge: 15 * 60 * 1000,        // 15 minutes
+                path: "/api",                  // only sent with API requests
+                priority: "high",
+            });
+
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,                 // no JS access → XSS protection
+                secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+                sameSite: "strict",             // CSRF protection
+                maxAge: 7 * 24 * 60 * 60 * 1000,// 7 days
+                path: "/api/auth/refresh",      // refresh token only sent for refresh route
+                priority: "high",               // browser eviction policy
+            });
+            return res.status(200).json({ message: result.message, user: result.user });
         } catch (error) {
             console.error("Error during user login:", error);
             return res.status(500).json({ message: "Internal server error" });
         }
     },
 
-    getAllUsers: async(req:Request, res:Response) => {
+    getAllUsers: async (req: Request, res: Response) => {
         try {
             const users = await getAlluser();
             return res.status(200).json(users);
@@ -47,7 +64,7 @@ const userController = {
         }
     },
 
-    refreshAccessToken: async (req:Request, res:Response) => {
+    refreshAccessToken: async (req: Request, res: Response) => {
         const { email, refreshToken } = req.body;
         try {
             if (!email || !refreshToken) {
@@ -57,6 +74,23 @@ const userController = {
             if (!result.success) {
                 return res.status(400).json({ message: result.message });
             }
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,                // protect against XSS
+                secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+                sameSite: "strict",            // CSRF protection
+                maxAge: 15 * 60 * 1000,        // 15 minutes
+                path: "/api",                  // only sent with API requests
+                priority: "high",
+            });
+
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,                 // no JS access → XSS protection
+                secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+                sameSite: "strict",             // CSRF protection
+                maxAge: 7 * 24 * 60 * 60 * 1000,// 7 days
+                path: "/api/auth/refresh",      // refresh token only sent for refresh route
+                priority: "high",               // browser eviction policy
+            });
             return res.status(200).json({ message: result.message, accessToken: result.accessToken, refreshToken: result.refreshToken });
         } catch (error) {
             console.error("Error refreshing access token:", error);

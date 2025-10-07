@@ -3,7 +3,7 @@ import React, { FormEvent, useEffect, useState } from "react";
 import { cn } from "../../lib/util";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
-
+import {toast} from "react-toastify";
 import Cookies from "js-cookie";
 import { apiRequest } from "../../lib/api";
 
@@ -15,6 +15,7 @@ export default function SignupPage() {
     password: ""
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   
   const handleGoogleLogin = async () => {
     try {
@@ -28,7 +29,6 @@ export default function SignupPage() {
   const handleFormSubmit = async (e:FormEvent) => {
     e.preventDefault();
     try {
-      // Add your signup logic here
       setLoading(true);
       console.log("Signup form submitted:", formData);
       const response = await apiRequest('/user/signup', 'POST', formData);
@@ -36,6 +36,8 @@ export default function SignupPage() {
       router.push("/login");
     } catch (error) {
       console.log("Error in form signup", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

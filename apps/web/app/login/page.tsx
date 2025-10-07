@@ -3,8 +3,10 @@ import React, { FormEvent, useEffect, useState } from "react";
 import { cn } from "../../lib/util";
 import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
-
-import Cookies from "js-cookie";
+import { useAppDispatch } from "../../lib/hooks";
+import { setUser } from "../../lib/userSlice";
+import { apiRequest } from "../../lib/api";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,7 +14,8 @@ export default function LoginPage() {
     email: "",
     password: ""
   });
-  
+  const [loading, setLoading] = useState(false);
+  const dispatch = useAppDispatch();
   const handleGoogleLogin = async () => {
     try {
       console.log("url is :" , `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/google`)
@@ -26,15 +29,17 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       // Add your login logic here
+      setLoading(true);
       console.log("Login form submitted:", formData);
-      // Example API call:
-      // const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/login`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      const response = await apiRequest('/user/login', 'POST', formData);
+      console.log("Login response:", response);
+      dispatch(setUser(response.user));
+      router.push("/");
     } catch (error) {
       console.log("Error in form login", error);
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,13 +50,24 @@ export default function LoginPage() {
     });
   };
 
-  useEffect(() => {
-    const token = Cookies.get("token");
-    console.log("token", token);
-    if (token) {
-      router.push("/");
-    }
-  }, []);
+   useEffect(() => {
+    const checkSession = async () => {
+      setLoading(true);
+      try {
+        const response = await apiRequest("/user/me", "GET");
+        console.log("Session check response:", response);
+        if (response?.user) {
+          dispatch(setUser(response.user));
+          if (window.location.pathname !== "/") router.push("/");
+        }
+      } catch {
+        // not logged in, stay on login page
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkSession();
+  }, [dispatch, router]);
 
   return (
     <div
@@ -60,7 +76,7 @@ export default function LoginPage() {
         "[background-size:40px_40px]",
         "[background-image:linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)]",
         "dark:[background-image:linear-gradient(to_right,#262626_1px,transparent_1px),linear-gradient(to_bottom,#262626_1px,transparent_1px)]",
-        "h-fit border-0 pt-16 sm:pt-20 md:pt-24 lg:pt-[8%] relative"
+        "h-fit border-1 pt-16 sm:pt-20 md:pt-24 lg:pt-[8%] relative"
       )}
     >
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black z-0"></div>
@@ -101,7 +117,7 @@ export default function LoginPage() {
                   type="submit"
                   className="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-md text-sm"
                 >
-                  Sign In
+                  {loading ? "Signing in...":"Sign In"}
                 </button>
               </form>
 

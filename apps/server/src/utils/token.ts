@@ -28,4 +28,18 @@ export const generateAccessToken = (payload: Payload, type: string): string => {
     throw new Error("Invalid token type")
 }
 
+export const verifyToken = (token: string, type: string): Payload | null => {
+    try {
+        if (type === "access") {
+            return jwt.verify(token, JWT_ACCESS_SECRET) as Payload
+        } else if (type === "refresh") {
+            return jwt.verify(token, JWT_REFRESH_SECRET) as Payload
+        }
+        throw new Error("Invalid token type")
+    } catch (error) {
+        console.error("Token verification failed:", error);
+        return null
+    }
+}
+
 

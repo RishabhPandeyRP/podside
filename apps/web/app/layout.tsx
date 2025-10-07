@@ -3,7 +3,7 @@
 // import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import {
-  Navbar,
+ 
   NavBody,
   NavItems,
   NavbarLogo,
@@ -17,7 +17,9 @@ import { Inter } from "next/font/google";
 import Footer from "../components/Footer";
 import Link from "next/link";
 import { useState } from "react";
-import { Toaster } from "react-hot-toast";
+import {ToastContainer} from "react-toastify"
+import StoreProvider from "./StoreProvider";
+import NavBar from "../components/NavBar";
 
 // Initialize the font object
 const inter = Inter({
@@ -46,6 +48,7 @@ export default function RootLayout({
   const [visible] = useState(false);
   return (
     <html lang="en" className="dark">
+      <StoreProvider>
       <body
         className={`${inter.className} antialiased border-0 border-green-600 flex flex-col min-h-screen`}
       >
@@ -94,14 +97,18 @@ export default function RootLayout({
             </MobileNav>
           </Navbar>
         </div>  */}
+        <div>
+          <NavBar></NavBar>
+        </div>
 
         <div className="flex-grow h-fit">
-          <Toaster position="top-right" />
+          <ToastContainer position="bottom-center" />
           {children}
         </div>
 
         <Footer />
       </body>
+      </StoreProvider>
     </html>
   );
 }

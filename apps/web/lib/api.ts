@@ -17,16 +17,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"}/user/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        await api.post("/user/refresh", {} , {withCredentials:true}); // attempt token refresh
         return api(originalRequest); // retry original request
       } catch (err) {
         // Refresh failed → logout user
         console.error("Refresh token invalid, logging out...");
-        window.location.href = "/login";
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+
       }
     }
     return Promise.reject(error);
@@ -49,9 +48,10 @@ export async function apiRequest<T = any>(
       ...config,
     });
     return response.data;
-  } catch (error: any) {
-    console.error("API Error:", error?.response || error);
-    throw error?.response?.data || new Error("API request failed");
+  } catch (error) {
+    const axiosError = error as AxiosError<{message?: string}>;
+    const message = axiosError.response?.data?.message || axiosError.message || "An unexpected error occurred";
+    throw new Error(message);
   }
 }
 

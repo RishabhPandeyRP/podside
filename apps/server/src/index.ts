@@ -8,6 +8,7 @@ import session from "express-session";
 import http from "http";
 import routes from "./routes"
 import { io as ClientIO, Socket } from "socket.io-client";
+import cookieParser from "cookie-parser";
 
 
 const app = express();
@@ -37,6 +38,9 @@ app.use(
     cookie: { secure: false },
   })
 );
+
+app.use(cookieParser());
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/auth", authRouter);

@@ -1,4 +1,4 @@
-import { getAlluser, getMe, refreshAccessToken, userSignUp } from "../services/userService";
+import { getAlluser, refreshAccessToken, userSignUp, logout } from "../services/userService";
 import { userLogin } from "../services/userService";
 import { Request, Response } from "express";
 import { verifyToken } from "../utils/token";
@@ -117,7 +117,20 @@ const userController = {
             console.error("Error fetching user profile:", error);
             return res.status(500).json({ message: "Internal server error" });
         }
-    }
+    },
+
+    logout: async (req: Request, res: Response) => {
+        const userId = req.body.userId;
+        try {
+            await logout(userId);
+            res.clearCookie("accessToken", { path: "/" });
+            res.clearCookie("refreshToken", { path: "/" });
+            return res.status(200).json({ message: "Logged out successfully" });
+        } catch (error) {
+            console.error("Error during logout:", error);
+            return res.status(500).json({ message: "Internal server error" });
+        }
+    },
 };
 
 export default userController;

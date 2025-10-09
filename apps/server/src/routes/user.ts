@@ -7,5 +7,6 @@ router.post("/login", async (req, res) => { userController.userLogin(req, res) }
 router.get("/", async (req, res) => { userController.getAllUsers(req, res) });
 router.post("/refresh", async (req, res) => { userController.refreshAccessToken(req, res) });
 router.get("/me", async (req, res) => { userController.getMe(req, res) });
+router.post("/logout", async (req, res) => { userController.logout(req, res) });
 
 export default router;

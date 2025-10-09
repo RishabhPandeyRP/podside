@@ -167,3 +167,19 @@ export async function getMe(userId: number) {
     }
     return { success: true, user };
 }
+
+export async function logout(userId: number) {
+    await prisma.refreshToken.updateMany({
+        where: {
+            userId: userId,
+            revoked: false,
+            expiresAt: {
+                gt: new Date()
+            }
+        },
+        data: {
+            revoked: true
+        }
+    });
+    return { success: true, message: "Logged out successfully" };
+}

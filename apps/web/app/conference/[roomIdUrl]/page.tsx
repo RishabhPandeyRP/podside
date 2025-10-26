@@ -12,6 +12,7 @@ import ValidationScreen from "../../../components/conference/ValidationScreen";
 import ErrorValidationScreen from "../../../components/conference/ErrorValidationScreen";
 import JoiningScreen from "../../../components/conference/JoiningScreen";
 import ConferenceScreen from "../../../components/conference/ConferenceScreen";
+import { motion } from "framer-motion";
 
 const socket = io("http://localhost:4000", { withCredentials: true, transports: ["websocket"] });
 
@@ -19,11 +20,11 @@ const socket = io("http://localhost:4000", { withCredentials: true, transports: 
 const validateRoom = async (roomId: string, email: string) => {
     let searchField = ""
     if (email.trim() == "" || email == null) {
-        searchField = `/api/room/validate/${roomId}`
+        searchField = `/room/validate/${roomId}`
     } else {
-        searchField = `/api/room/validate/${roomId}?email=${email}`
+        searchField = `/room/validate/${roomId}?email=${email}`
     }
-    // Mock validation logic - replace with your actual API call
+
     const data = await apiRequest(searchField, "GET") as {
         message: string,
         room: {
@@ -70,7 +71,7 @@ export default function Conference() {
     const [newParticipants, setNewParticipants] = useState<Set<string>>(new Set());
     const [isRecording, setIsRecording] = useState(false);
 
-    const [isValidating, setIsValidating] = useState(true);
+    const [isValidating, setIsValidating] = useState(false);
     const [isLeavingRoom, setIsLeaving] = useState(false);
     const [isRoomValid, setIsRoomValid] = useState(false);
     const [validationError, setValidationError] = useState("");
@@ -94,24 +95,29 @@ export default function Conference() {
     // Room validation effect
     useEffect(() => {
         const performRoomValidation = async () => {
+            // if (!roomIdUrl) return;
+
+            // setRoomId(roomIdUrl as string);
+            // setIsValidating(true);
+            // setValidationError("");
+
+            // try {
+            //     // For initial validation, we'll use a placeholder email
+            //     // The actual email validation will happen when user tries to join
+            //     const response = await validateRoom(roomIdUrl as string, "");
+            //     setRoomDetails(response);
+            //     setIsRoomValid(true);
+            // } catch (error: any) {
+            //     setValidationError(error.message || "Failed to validate room");
+            //     setIsRoomValid(false);
+            // } finally {
+            //     setTimeout(() => {
+            //         setIsValidating(false);
+            //     }, 4500); // slight delay for better UX
+            // }
+
             if (!roomIdUrl) return;
-
             setRoomId(roomIdUrl as string);
-            setIsValidating(true);
-            setValidationError("");
-
-            try {
-                // For initial validation, we'll use a placeholder email
-                // The actual email validation will happen when user tries to join
-                const response = await validateRoom(roomIdUrl as string, "");
-                setRoomDetails(response);
-                setIsRoomValid(true);
-            } catch (error: any) {
-                setValidationError(error.message || "Failed to validate room");
-                setIsRoomValid(false);
-            } finally {
-                setIsValidating(false);
-            }
         };
 
         performRoomValidation();
@@ -130,33 +136,33 @@ export default function Conference() {
     }, [hasLeftRoom, redirectCountdown]);
 
     useEffect(() => {
-    function handlePeerVideoMuted({ producerId }:{producerId: string}) {
-        console.log("Peer video muted:", producerId);
-        setRemoteVideoMuted(prev => ({ ...prev, [producerId]: true }));
-    }
-    function handlePeerVideoUnmuted({ producerId }:{producerId: string}) {
-        setRemoteVideoMuted(prev => ({ ...prev, [producerId]: false }));
-    }
-    function handlePeerAudioMuted({ producerId }:{producerId: string}) {
-        console.log("Peer audio muted:", producerId);
-        setRemoteAudioMuted(prev => ({ ...prev, [producerId]: true }));
-    }
-    function handlePeerAudioUnmuted({ producerId }:{producerId: string}) {
-        setRemoteAudioMuted(prev => ({ ...prev, [producerId]: false }));
-    }
+        function handlePeerVideoMuted({ producerId }: { producerId: string }) {
+            console.log("Peer video muted:", producerId);
+            setRemoteVideoMuted(prev => ({ ...prev, [producerId]: true }));
+        }
+        function handlePeerVideoUnmuted({ producerId }: { producerId: string }) {
+            setRemoteVideoMuted(prev => ({ ...prev, [producerId]: false }));
+        }
+        function handlePeerAudioMuted({ producerId }: { producerId: string }) {
+            console.log("Peer audio muted:", producerId);
+            setRemoteAudioMuted(prev => ({ ...prev, [producerId]: true }));
+        }
+        function handlePeerAudioUnmuted({ producerId }: { producerId: string }) {
+            setRemoteAudioMuted(prev => ({ ...prev, [producerId]: false }));
+        }
 
-    socket.on("peer-video-muted", handlePeerVideoMuted);
-    socket.on("peer-video-unmuted", handlePeerVideoUnmuted);
-    socket.on("peer-audio-muted", handlePeerAudioMuted);
-    socket.on("peer-audio-unmuted", handlePeerAudioUnmuted);
+        socket.on("peer-video-muted", handlePeerVideoMuted);
+        socket.on("peer-video-unmuted", handlePeerVideoUnmuted);
+        socket.on("peer-audio-muted", handlePeerAudioMuted);
+        socket.on("peer-audio-unmuted", handlePeerAudioUnmuted);
 
-    return () => {
-        socket.off("peer-video-muted", handlePeerVideoMuted);
-        socket.off("peer-video-unmuted", handlePeerVideoUnmuted);
-        socket.off("peer-audio-muted", handlePeerAudioMuted);
-        socket.off("peer-audio-unmuted", handlePeerAudioUnmuted);
-    };
-}, []);
+        return () => {
+            socket.off("peer-video-muted", handlePeerVideoMuted);
+            socket.off("peer-video-unmuted", handlePeerVideoUnmuted);
+            socket.off("peer-audio-muted", handlePeerAudioMuted);
+            socket.off("peer-audio-unmuted", handlePeerAudioUnmuted);
+        };
+    }, []);
 
     // utils/db.ts
     const initDB = async () => {
@@ -223,7 +229,9 @@ export default function Conference() {
             setIsValidating(false);
             return;
         } finally {
-            setIsValidating(false);
+            setTimeout(() => {
+                setIsValidating(false);
+            }, 1500); // slight delay for better UX
         }
 
         userInteracted.current = true;
@@ -369,10 +377,10 @@ export default function Conference() {
                 socket.emit("produce", { kind, rtpParameters }, res)
             );
             ownProducerId.current?.add(id);
-            if(kind === 'video') {
+            if (kind === 'video') {
                 videoProducerId.current = id;
             }
-            if(kind === 'audio') {
+            if (kind === 'audio') {
                 audioProducerId.current = id;
             }
             callback({ id });
@@ -418,8 +426,8 @@ export default function Conference() {
     const audioHandler = () => {
         if (!localStream) return;
         localStream.getAudioTracks().forEach((track) => (track.enabled = isAudioMuted));
-        console.log("audio muted hit from ui" , roomId , audioProducerId.current);
-        if(!isAudioMuted) socket.emit("audio-muted", { roomId, producerId: audioProducerId.current });
+        console.log("audio muted hit from ui", roomId, audioProducerId.current);
+        if (!isAudioMuted) socket.emit("audio-muted", { roomId, producerId: audioProducerId.current });
         else socket.emit("audio-unmuted", { roomId, producerId: audioProducerId.current });
         setAudioMuted(!isAudioMuted);
     };
@@ -427,8 +435,8 @@ export default function Conference() {
     const videoHandler = () => {
         if (!localStream) return;
         localStream.getVideoTracks().forEach((track) => (track.enabled = isVideoMuted));
-        console.log("video muted hit from ui" , roomId , videoProducerId.current);
-        if(!isVideoMuted) socket.emit("video-muted", { roomId, producerId: videoProducerId.current });
+        console.log("video muted hit from ui", roomId, videoProducerId.current);
+        if (!isVideoMuted) socket.emit("video-muted", { roomId, producerId: videoProducerId.current });
         else socket.emit("video-unmuted", { roomId, producerId: videoProducerId.current });
         setVideoMuted(!isVideoMuted);
     };
@@ -481,7 +489,8 @@ export default function Conference() {
     const disconnect = async () => {
         try {
             setIsLeaving(true)
-            const searchField = `/api/room/leaveParticipant/${roomId}?email=${email}`
+            setHasLeftRoom(true);
+            const searchField = `/room/leaveParticipant/${roomId}?email=${email}`
             const data = await apiRequest(searchField, "GET") as {
                 message: string,
                 participant: {
@@ -498,8 +507,7 @@ export default function Conference() {
             if (!data.participant) {
                 throw new Error(data.message)
             }
-            setHasLeftRoom(true);
-            debugger;
+            
         } catch (error: any) {
             console.error("error while leaving the room")
             toast.error(error.message || "error while leaving the room")
@@ -584,7 +592,7 @@ export default function Conference() {
 
     // Render redirect screen when user has left the room
     if (hasLeftRoom) {
-        return <RedirectScreen redirectCountdown={redirectCountdown} setRedirectCountdown={setRedirectCountdown}></RedirectScreen>
+        return <RedirectScreen redirectCountdown={redirectCountdown} isLeaving={isLeavingRoom} setRedirectCountdown={setRedirectCountdown}></RedirectScreen>
     }
 
     // Render splash screen while validating
@@ -593,12 +601,18 @@ export default function Conference() {
     }
 
     // Render error screen if room validation failed
-    if (!isRoomValid) {
+    if (!isRoomValid && isValidating) {
         return <ErrorValidationScreen validationError={validationError} roomIdUrl={roomIdUrl}></ErrorValidationScreen>
     }
 
     return (
-        <div className="p-6 h-screen bg-[#151515] flex items-center justify-center border border-green-500">
+        <motion.div
+            key={isValidating ? "validating" : hasJoined ? "conference" : "joining"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="p-6 h-screen bg-[#151515] flex items-center justify-center border-0 border-green-500">
             {!hasJoined ? (
                 <JoiningScreen
                     roomIdUrl={roomIdUrl}
@@ -631,6 +645,7 @@ export default function Conference() {
                     videoHandler={videoHandler}>
                 </ConferenceScreen>
             )}
-        </div>
+
+        </motion.div>
     );
 }

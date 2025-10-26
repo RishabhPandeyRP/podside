@@ -1,47 +1,109 @@
-import { CheckCircle } from "lucide-react";
-import React from "react";
+"use client";
+import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
-interface RedierctScreenInterface {
-    redirectCountdown: number;
-    setRedirectCountdown: React.Dispatch<React.SetStateAction<number>>;
+interface RedirectScreenProps {
+  redirectCountdown: number;
+  isLeaving: boolean;
+  setRedirectCountdown: React.Dispatch<React.SetStateAction<number>>;
 }
-const RedirectScreen = ({ redirectCountdown, setRedirectCountdown }: RedierctScreenInterface) => {
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full mb-6">
-                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                </div>
 
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                    Meeting Ended
-                </h1>
+export default function RedirectScreen({
+  redirectCountdown,
+    isLeaving,
+  setRedirectCountdown,
+}: RedirectScreenProps) {
+  const totalTime = 10; // 10 seconds countdown
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  const progress = ((totalTime - redirectCountdown) / totalTime) * circumference;
+  const router = useRouter();
 
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    You have successfully left the meeting room.
-                </p>
+  // Countdown effect
+  useEffect(() => {
+    if (redirectCountdown <= 0) {
+      router.push("/");
+      return;
+    }
+    const timer = setTimeout(() => setRedirectCountdown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, setRedirectCountdown]);
 
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-6">
-                    <p className="text-green-700 dark:text-green-300 font-medium mb-2">
-                        Redirecting to homepage...
-                    </p>
-                    <div className="flex items-center justify-center gap-3">
-                        <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {redirectCountdown}
-                        </span>
-                    </div>
-                </div>
+  const handleReturnNow = () => {
+    router.push("/");
+  };
 
-                <button
-                    onClick={() => window.location.href = '/'}
-                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                    Go to Home Now
-                </button>
-            </div>
+  return (
+    <motion.div
+      className="h-screen w-full flex flex-col items-center justify-center bg-[#111111] text-gray-100"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-center space-y-6"
+      >
+        <h1 className="text-3xl font-semibold text-[#9966CC]">
+          Thanks for joining the meeting
+        </h1>
+
+        <p className="text-gray-400 text-lg">Redirecting to homepage in</p>
+
+        {/* Circular countdown */}
+        <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
+          <svg
+            className="-rotate-90 w-32 h-32 absolute"
+            viewBox="0 0 120 120"
+          >
+            {/* Background circle */}
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              stroke="#2c2c2c"
+              strokeWidth="8"
+              fill="none"
+            />
+            {/* Progress circle */}
+            <motion.circle
+              cx="60"
+              cy="60"
+              r={radius}
+              stroke="#9966CA"
+              strokeWidth="8"
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={progress}
+              strokeLinecap="round"
+              transition={{ duration: 1, ease: "linear" }}
+            />
+          </svg>
+
+          <motion.span
+            key={redirectCountdown}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-4xl font-bold text-white"
+          >
+            {redirectCountdown}
+          </motion.span>
         </div>
-    )
-}
 
-export default RedirectScreen
+        <div className="pt-4">
+          <button
+            onClick={handleReturnNow}
+            disabled={isLeaving}
+            className="bg-[#9966CA]/80 hover:bg-[#9966CA] text-white px-7 py-3 rounded-lg shadow-lg transition-all"
+          >
+            Return Now
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

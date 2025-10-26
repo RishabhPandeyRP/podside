@@ -11,8 +11,8 @@ import { toast } from "react-toastify";
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: "",
-    password: ""
+    email: "rishabh177044@gmail.com",
+    password: "abcd123"
   });
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();

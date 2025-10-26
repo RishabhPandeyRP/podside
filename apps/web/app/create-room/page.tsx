@@ -4,6 +4,8 @@ import { useState } from "react"
 import { apiRequest } from "../../lib/api"
 import { Video } from "lucide-react"
 import RoomForm from "../../components/create-room/RoomForm"
+import Router from "next/router"
+import { redirect } from "next/navigation"
 
 const CreateRoom = () => {
     const [roomUrl, setRoomUrl] = useState<string | null>(null);
@@ -15,6 +17,7 @@ const CreateRoom = () => {
     const [participants, setParticipants] = useState<string[]>([])
     const [newParticipantEmail, setNewParticipantEmail] = useState<string>("")
     const [emailError, setEmailError] = useState<string>("")
+    // const router = Router();
 
 
     const validateEmail = (email: string): boolean => {
@@ -82,7 +85,7 @@ const CreateRoom = () => {
                 participantEmails: participants
             }
 
-            const data = await apiRequest("/api/room", "POST", payload) as { roomId: string, link: string };
+            const data = await apiRequest("/room", "POST", payload) as { roomId: string, link: string };
 
             if (data?.link) {
                 setRoomUrl(data.link);
@@ -100,7 +103,9 @@ const CreateRoom = () => {
     const joinMeetingHandler = () => {
         if (roomUrl) {
             // Mock router push - replace with your actual router
-            window.open(roomUrl, '_blank');
+            // window.open(roomUrl, '_blank');
+            // Router.push(roomUrl);
+            redirect(roomUrl);
             // router.push(roomUrl)
         }
     };
@@ -154,8 +159,8 @@ const CreateRoom = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#151515] flex items-center justify-center p-4 border-0 border-red-500">
-            <div className="w-fit border-0 border-red-500">
+        <div className="min-h-screen bg-[#151515] flex items-center justify-center p-0 border-0 border-red-500">
+            <div className="w-fit border-0 border-red-500 -mt-[5%]">
                 {/* Header */}
                 {/* <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">

@@ -185,8 +185,21 @@ const CheckDevices = () => {
         if (selectedMic) setupMic(selectedMic);
         else cleanupAudio();
     }, [selectedMic]);
+    // Auto-select first available devices by default
+useEffect(() => {
+    if (devices.length > 0) {
+        const firstCam = devices.find(d => d.kind === "videoinput");
+        const firstMic = devices.find(d => d.kind === "audioinput");
+        const firstSpeaker = devices.find(d => d.kind === "audiooutput");
 
-    const cams = devices.filter((d) => d.kind === "videoinput");
+        if (firstCam && !selectedCam) setSelectedCam(firstCam.deviceId);
+        if (firstMic && !selectedMic) setSelectedMic(firstMic.deviceId);
+        if (firstSpeaker && !selectedSpeaker) setSelectedSpeaker(firstSpeaker.deviceId);
+    }
+}, [devices]);
+
+
+    const cams = devices.filter((d) => d.kind === "videoinput") ;
     const mics = devices.filter((d) => d.kind === "audioinput");
     const speakers = devices.filter((d) => d.kind === "audiooutput");
 
@@ -216,7 +229,7 @@ const CheckDevices = () => {
                     value={selectedCam}
                     className="w-full p-2 border-none focus:border-none bg-[#222222] text-[#f2f2f2] px-4 py-3 rounded-lg text-sm font-mono  outline-none transition-all duration-200"
                 >
-                    <option value="">Select Camera</option>
+                    <option value=" ">Select Camera</option>
                     {cams.map((cam) => (
                         <option key={cam.deviceId} value={cam.deviceId}>
                             {cam.label || `Camera ${cam.deviceId.slice(0, 8)}...`}

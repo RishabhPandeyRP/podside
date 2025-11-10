@@ -162,7 +162,7 @@ const ConferenceScreen = ({
     console.log("Remote Streams:", remoteStreams);
 
     return (
-        <div className="flex flex-col justify-between gap-5 p-2 bg-[#151515] rounded-lg shadow-lg mx-auto border-0 border-green-500 w-[100%] h-[92%] -mt-[7%]">
+        <div className="flex flex-col justify-between gap-5 p-2 bg-[#151515] rounded-lg shadow-lg mx-auto border-0 border-green-500 w-[100%] h-[100%] ">
 
             <StreamLayout
                 localStream={localStream}

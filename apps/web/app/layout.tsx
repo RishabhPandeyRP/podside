@@ -1,18 +1,5 @@
 "use client";
-// import type { Metadata } from "next";
-// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {
- 
-  NavBody,
-  NavItems,
-  NavbarLogo,
-  NavbarButton,
-  MobileNav,
-  MobileNavHeader,
-  MobileNavToggle,
-  MobileNavMenu,
-} from "../components/ui/resizable-navbar";
 import { Inter } from "next/font/google";
 import Footer from "../components/Footer";
 import Link from "next/link";
@@ -20,6 +7,12 @@ import { useState } from "react";
 import {ToastContainer} from "react-toastify"
 import StoreProvider from "./StoreProvider";
 import NavBar from "../components/NavBar";
+import { usePathname } from "next/navigation";
+import Sidebar from "../components/SidebarWrapper";
+import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import App from "next/app";
+import AppLayout from "./AppLayout";
 
 // Initialize the font object
 const inter = Inter({
@@ -46,67 +39,36 @@ export default function RootLayout({
 }>) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [visible] = useState(false);
+  const pathname = usePathname();
+  const hideNavbar = pathname.startsWith("/conference/");
+  // const { isOpen } = useSelector((state: any) => state.sideBar);
   return (
     <html lang="en" className="dark">
       <StoreProvider>
       <body
         className={`${inter.className} antialiased border-0 border-green-600 flex flex-col min-h-screen`}
       >
-        {/* <div className="border-0 border-green-400 pt-[0px]">
-          <Navbar>
-            <NavBody>
-              <NavbarLogo />
-              <NavItems items={navItems} />
-              <NavbarButton href="/login" variant="primary">
-                Get Started
-              </NavbarButton>
-            </NavBody>
-
-            <MobileNav visible={visible}>
-              <MobileNavHeader>
-                <NavbarLogo />
-                <MobileNavToggle
-                  isOpen={isMobileMenuOpen}
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                />
-              </MobileNavHeader>
-
-              <MobileNavMenu
-                isOpen={isMobileMenuOpen}
-                onClose={() => setIsMobileMenuOpen(false)}
-              >
-                {/* Mobile menu items */}
-                {/* <div className="flex flex-col w-full gap-4">
-                  <Link href="/" className="text-black dark:text-white">
-                    Home
-                  </Link>
-                  <Link href="/about" className="text-black dark:text-white">
-                    About
-                  </Link>
-                  <Link href="/services" className="text-black dark:text-white">
-                    Services
-                  </Link>
-                  <Link href="/contact" className="text-black dark:text-white">
-                    Contact
-                  </Link>
-                  <NavbarButton variant="primary" className="mt-4">
-                    Get Started
-                  </NavbarButton>
-                </div>
-              </MobileNavMenu>
-            </MobileNav>
-          </Navbar>
-        </div>  */}
-        <div>
-          <NavBar></NavBar>
+        {/* <div className="border-1 border-green-500">
+          { !hideNavbar && <NavBar></NavBar>}
         </div>
 
-        <div className="flex-grow h-fit">
-          <ToastContainer position="bottom-center" />
-          {children}
-        </div>
-
-        <Footer />
+        <motion.div
+            className="flex-grow transition-transform relative z-0"
+            animate={{
+              x: isOpen ? "-24rem" : "0rem", // shift left by sidebar width
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+            }}
+          >
+            <ToastContainer position="bottom-center" />
+            {children}
+            <Footer />
+          </motion.div>
+          <Sidebar></Sidebar> */}
+          <AppLayout>{children}</AppLayout>
       </body>
       </StoreProvider>
     </html>

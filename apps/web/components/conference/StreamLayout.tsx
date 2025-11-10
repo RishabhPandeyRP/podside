@@ -241,8 +241,8 @@ const StreamLayout = ({
     {/* 0 remote streams */ }
     if (remoteCount === 0) {
         return (
-            <div className="flex flex-col lg:flex-row gap-8 w-full h-[88%]">
-                <div className="w-[75%] h-full mx-auto">
+            <div className="flex flex-col lg:flex-row gap-8 w-full h-[90%]">
+                <div className="w-[85%] h-full mx-auto">
                     <LocalStreamTile {...{ localStream, localVideoRef, username, isVideoMuted, isAudioMuted }} />
                 </div>
             </div>
